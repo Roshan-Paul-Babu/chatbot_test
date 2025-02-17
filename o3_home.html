@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot Widget</title>
+    <style>
+      .chat-widget-button {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: #000000;
+        border: 2px solid #75dab4;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1000;
+      }
+
+      .chat-widget-button::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: #75dab4;
+        opacity: 0.2;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 0.2;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0.2;
+        }
+      }
+
+      .chat-widget-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 30px #75dab4;
+      }
+
+      .chat-widget-button svg {
+        width: 30px;
+        height: 30px;
+        fill: #75dab4;
+      }
+
+      /* chat widget container */
+      .chat-widget-container {
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        width: 500px;
+        height: 600px;
+        background-color: #121212;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        display: none;
+        flex-direction: column;
+        border: 1px solid rgba(117, 218, 180, 0.1);
+      }
+
+      /* header */
+      .chat-widget-header {
+        background-color: #1a1a1a;
+        color: #ffffff;
+        padding: 16px 20px;
+        font-size: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(117, 218, 180, 0.1);
+        border-radius: 16px 16px 0 0;
+      }
+
+      .chat-widget-header .close-button {
+        background: none;
+        border: none;
+        color: #75dab4;
+        font-size: 20px;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      .chat-widget-header .close-button:hover {
+        transform: rotate(90deg);
+      }
+
+      /* Web Chat container */
+      .web-chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 100%;
+        background-color: #121212;
+        border-radius: 0 0 16px 16px;
+      }
+
+      /* Adjust height of Web Chat */
+      .web-chat-container > * {
+        flex: 1;
+        overflow-y: auto;
+        height: 100%;
+      }
+
+      /* Adaptive card buttons */
+      .web-chat-container .ac-pushButton {
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(117, 218, 180, 0.2) !important;
+        border-radius: 8px !important;
+        padding: 12px 20px !important;
+        font-size: 14px !important;
+        cursor: pointer !important;
+        margin: 5px 0 !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .web-chat-container .ac-pushButton:hover {
+        background-color: #75dab4 !important;
+        color: #1a1a1a !important;
+        border-color: #75dab4 !important;
+      }
+
+      /* Message bubbles */
+      .web-chat-container [role="list"] {
+        padding: 20px !important;
+      }
+
+      /* User messages */
+      /* User message bubble styles */
+      .webchat__bubble__content {
+        background-color: #1a1a1a !important;
+        border-radius: 16px 16px 0 16px !important;
+        color: #ffffff !important;
+        padding: 12px 16px !important;
+        margin: 8px 0 !important;
+        border: 1px solid rgba(117, 218, 180, 0.2) !important;
+      }
+
+      /* Text color inside user message bubbles */
+      .webchat__bubble--from-user .webchat__text-content {
+        color: #f1eaea !important;
+      }
+
+      /* Add these new styles for the modern scrollbar */
+      .web-chat-container *::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      .web-chat-container *::-webkit-scrollbar-track {
+        background: #121212;
+        border-radius: 4px;
+      }
+
+      .web-chat-container *::-webkit-scrollbar-thumb {
+        background: #2a2a2a;
+        border-radius: 4px;
+        border: 2px solid #121212;
+      }
+
+      .web-chat-container *::-webkit-scrollbar-thumb:hover {
+        background: #75dab4;
+      }
+
+      /* For Firefox */
+      .web-chat-container * {
+        scrollbar-width: thin;
+        scrollbar-color: #2a2a2a #121212;
+      }
+
+      .webchat__typingIndicator {
+        width: 90px !important;
+        height: 34px !important;
+        background-size: 72px 56px;
+        background-position: top;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Chat widget button -->
+    <div id="open-chat" class="chat-widget-button">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"
+        />
+      </svg>
+    </div>
+
+    <!-- Chat widget container -->
+    <div class="chat-widget-container" id="chat-container">
+      <div class="chat-widget-header">
+        <img
+          src="./Botangelos_white.png"
+          alt="Company Name"
+          style="height: 24px"
+        />
+        <button class="close-button" id="close-chat">✖</button>
+      </div>
+      <div class="web-chat-container" id="webchat"></div>
+    </div>
+
+    <script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
+
+    <script type="module">
+        import FingerprintJS from 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4.6.0/+esm';
+      
+        // Initialize the FingerprintJS agent at application startup
+        const fpPromise = FingerprintJS.load();
+      
+        const chatButton = document.getElementById("open-chat");
+        const chatContainer = document.getElementById("chat-container");
+        const closeButton = document.getElementById("close-chat");
+      
+        const directLineSecret =
+        "5cP0jVBQs6ClUT8XdQGmNRnPQ1p6juHrRjr7ed3ikvm75BjBYHn9JQQJ99BAAC4f1cMAArohAAABAZBSlL3l.70B2KIp9rufr5cCZ0LE97WfwkMbgTSQQEWdwXXSpxp7G6XV6dO6FJQQJ99BAAC4f1cMAArohAAABAZBS3KMj";
+
+      const styleOptions = {
+        botAvatarInitials: "🤖",
+        userAvatarInitials: "🧑",
+        botAvatarBackgroundColor: "#1a1a1a",
+        userAvatarBackgroundColor: "#1a1a1a",
+        backgroundColor: "#121212",
+        bubbleBackground: "#1e1e1e",
+        bubbleTextColor: "#ffffff",
+        bubbleBorderRadius: 16,
+        sendBoxBackground: "#1a1a1a",
+        sendBoxTextColor: "#ffffff",
+        sendBoxBorderTop: "1px solid rgba(117, 218, 180, 0.1)",
+        hideUploadButton: true,
+        typingAnimationBackgroundImage: 'url("Animation - 1739180260715.gif")',
+      };
+      
+        const store = window.WebChat.createStore(
+          {},
+          ({ dispatch }) => (next) => (action) => next(action)
+        );
+      
+        // Function to get user's timezone
+        function getUserTimezone() {
+          return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+      
+        // Function to get the browser fingerprint using FingerprintJS
+        async function getBrowserFingerprint() {
+          try {
+            // Ensure the FingerprintJS agent is loaded
+            const fp = await fpPromise;
+            // Get the visitor identifier
+            const result = await fp.get();
+            // Return the unique visitor identifier
+            return result.visitorId;
+          } catch (error) {
+            console.error("Error generating browser fingerprint:", error);
+            return "Unknown Fingerprint";
+          }
+        }
+      
+        // Initialize Web Chat and send user info
+        async function initWebChat() {
+          const userTimezone = getUserTimezone();
+          const browserFingerprint = await getBrowserFingerprint();
+      
+          console.log("User Info:", {
+            userTimezone,
+            browserFingerprint,
+          });
+      
+          window.WebChat.renderWebChat(
+            {
+              directLine: window.WebChat.createDirectLine({
+                secret: directLineSecret,
+              }),
+              styleOptions,
+              store,
+            },
+            document.getElementById("webchat")
+          );
+      
+          // Send enhanced user info to bot
+          store.dispatch({
+            type: "WEB_CHAT/SEND_EVENT",
+            payload: {
+              name: "user_info",
+              value: {
+                timezone: userTimezone,
+                browserFingerprint,
+              },
+            },
+          });
+        }
+      
+        chatButton.addEventListener("click", () => {
+          if (chatContainer.style.display === "flex") {
+            chatContainer.style.display = "none";
+          } else {
+            chatContainer.style.display = "flex";
+            initWebChat();
+          }
+        });
+      
+        closeButton.addEventListener("click", () => {
+          chatContainer.style.display = "none";
+        });
+      </script>
+      
+</body>
+</html>
